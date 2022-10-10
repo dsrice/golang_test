@@ -1,0 +1,22 @@
+version: "3"
+services:
+    go_test:
+        container_name: go_test
+        build: ./docker
+        volumes:
+            - ./app:/go/src/app
+        tty: true
+    vertica:
+        container_name: vertica
+        image: vertica/vertica-ce
+        environment:
+            APP_DB_USER: "testadmin"
+            APP_DB_PASSWORD: "vertica"
+            TZ: "Asia/Tokyo"
+        ports:
+            - "5433:5433"
+            - "5444:5444"
+        volumes:
+            -   ./vertica/data:/data
+
+
