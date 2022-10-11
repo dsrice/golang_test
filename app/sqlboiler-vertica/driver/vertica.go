@@ -309,66 +309,35 @@ WHERE
 func (d *VerticaDBDriver) ForeignKeyInfo(schema, tableName string) ([]drivers.ForeignKey, error) {
 	var fkeys []drivers.ForeignKey
 
-	query := `SELECT
-    DISTINCT
-    pgcon.conname,
-    pgc.relname AS source_table,
-    kcu.column_name AS source_column,
-    dstlookupname.relname AS dest_table,
-    pgadst.attname AS dest_column
-FROM
-    pg_namespace AS pgn
-    INNER JOIN pg_class AS pgc
-    ON pgn.oid = pgc.relnamespace AND pgc.relkind = 'r'
-    INNER JOIN pg_constraint AS pgcon
-    ON
-        pgn.oid = pgcon.connamespace
-        AND pgc.oid = pgcon.conrelid
-    INNER JOIN pg_class AS dstlookupname
-    ON pgcon.confrelid = dstlookupname.oid
-    LEFT JOIN information_schema.key_column_usage AS kcu
-    ON
-        pgcon.conname = kcu.constraint_name
-        AND pgc.relname = kcu.table_name
-    LEFT JOIN information_schema.key_column_usage AS kcudst
-    ON
-        pgcon.conname = kcu.constraint_name
-        AND dstlookupname.relname = kcu.table_name
-    INNER JOIN pg_attribute AS pgadst
-    ON
-        pgcon.confrelid = pgadst.attrelid
-        AND pgadst.attnum = ANY pgcon.confkey
-WHERE
-    pgn.nspname = ?
-    AND pgc.relname = ?
-    AND pgcon.contype = 'f'
-ORDER BY
-    pgcon.conname DESC;`
+	//query := `select 1 from tables`
 
-	var rows *sql.Rows
-	var err error
-	if rows, err = d.conn.Query(query, tableName, schema); err != nil {
-		return nil, err
-	}
+	//	var rows *sql.Rows
+	//	var err error
+	//if _, err := d.conn.Query(query); err != nil {
+	//		return nil, err
+	//	}
 
-	for rows.Next() {
-		var fkey drivers.ForeignKey
-		var sourceTable string
+	return fkeys, nil
+	/*
+		for rows.Next() {
+			var fkey drivers.ForeignKey
+			var sourceTable string
 
-		fkey.Table = tableName
-		err = rows.Scan(&fkey.Name, &sourceTable, &fkey.Column, &fkey.ForeignTable, &fkey.ForeignColumn)
-		if err != nil {
+			fkey.Table = tableName
+			err = rows.Scan(&fkey.Name, &sourceTable, &fkey.Column, &fkey.ForeignTable, &fkey.ForeignColumn)
+			if err != nil {
+				return nil, err
+			}
+
+			fkeys = append(fkeys, fkey)
+		}
+
+		if err = rows.Err(); err != nil {
 			return nil, err
 		}
 
-		fkeys = append(fkeys, fkey)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return fkeys, nil
+		return fkeys, nil
+	*/
 }
 
 // TranslateColumnType converts Cockroach database types to Go types, for example
