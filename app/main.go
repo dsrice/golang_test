@@ -1,11 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	_ "github.com/vertica/vertica-sql-go"
 	"net/url"
 	"os"
+)
+
+import (
+	"database/sql"
+	_ "github.com/vertica/vertica-sql-go"
 )
 
 func main() {
@@ -19,24 +22,25 @@ func main() {
 	}
 	fmt.Println(query.String())
 	conn, err := sql.Open("vertica", query.String())
+	defer conn.Close()
 	if err != nil {
 		fmt.Printf(err.Error())
 		os.Exit(99)
 	}
 
-	rows, err := conn.Query("select * from golearn.test")
+	rows, err := conn.Query("select table_name as name from tables")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(99)
 	}
 
 	for rows.Next() {
-		var id int
 		var name string
-		if err = rows.Scan(&id, &name); err != nil {
+		if err = rows.Scan(&name); err != nil {
 			fmt.Println(err.Error())
 			os.Exit(99)
 		}
-		fmt.Println(fmt.Sprintf("id: %d, name: %s", id, name))
+		fmt.Println(fmt.Sprintf("name: %s", name))
 	}
+
 }

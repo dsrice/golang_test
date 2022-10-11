@@ -1,0 +1,7 @@
+[vertica]
+user="root"
+pass=""
+host="localhost"
+port=26257
+dbname="mydatabase"
+sslmode="disable"
