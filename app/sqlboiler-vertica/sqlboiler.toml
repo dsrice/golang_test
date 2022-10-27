@@ -1,7 +1,0 @@
-[vertica]
-user="dbadmin"
-pass="gotest"
-host="vertica"
-port=5433
-dbname="gotest"
-sslmode="disable"

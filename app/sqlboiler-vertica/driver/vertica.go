@@ -89,7 +89,7 @@ func (p *VerticaDriver) Assemble(config drivers.Config) (dbinfo *drivers.DBInfo,
 	}()
 
 	user := config.DefaultString(drivers.ConfigUser, "dbadmin")
-	pass := config.DefaultString(drivers.ConfigPass, "gotest")
+	pass := config.DefaultString(drivers.ConfigPass, "")
 	dbname := config.DefaultString(drivers.ConfigDBName, "gotest")
 	host := config.DefaultString(drivers.ConfigHost, "vertica")
 	port := config.DefaultInt(drivers.ConfigPort, 5432)
