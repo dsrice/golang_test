@@ -42,5 +42,4 @@ func main() {
 		}
 		fmt.Println(fmt.Sprintf("name: %s", name))
 	}
-
 }

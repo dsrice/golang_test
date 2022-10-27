@@ -1,0 +1,68 @@
+{
+	"schema": "golearn",
+	"tables": [
+		{
+			"name": "base",
+			"schema_name": "",
+			"columns": [
+				{
+					"name": "id",
+					"type": "int",
+					"db_type": "int",
+					"default": "",
+					"comment": "",
+					"nullable": false,
+					"unique": true,
+					"validated": false,
+					"auto_generated": false,
+					"arr_type": null,
+					"udt_name": "",
+					"domain_name": null,
+					"full_db_type": ""
+				},
+				{
+					"name": "name",
+					"type": "null.String",
+					"db_type": "varchar(64)",
+					"default": "",
+					"comment": "",
+					"nullable": true,
+					"unique": true,
+					"validated": false,
+					"auto_generated": false,
+					"arr_type": null,
+					"udt_name": "",
+					"domain_name": null,
+					"full_db_type": ""
+				}
+			],
+			"p_key": {
+				"name": "C_PRIMARY",
+				"columns": [
+					"id"
+				]
+			},
+			"f_keys": null,
+			"is_join_table": false,
+			"to_one_relationships": null,
+			"to_many_relationships": null,
+			"is_view": false,
+			"view_capabilities": {
+				"can_insert": false,
+				"can_upsert": false
+			}
+		}
+	],
+	"dialect": {
+		"lq": 34,
+		"rq": 34,
+		"use_index_placeholders": true,
+		"use_last_insert_id": false,
+		"use_schema": true,
+		"use_default_keyword": true,
+		"use_top_clause": false,
+		"use_output_clause": false,
+		"use_case_when_exists_clause": false,
+		"use_auto_columns": false
+	}
+}

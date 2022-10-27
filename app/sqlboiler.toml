@@ -1,7 +1,7 @@
 [vertica]
-user="root"
-pass=""
-host="localhost"
-port=26257
-dbname="mydatabase"
+user="dbadmin"
+pass="gotest"
+host="vertica"
+port=5433
+dbname="golearn"
 sslmode="disable"

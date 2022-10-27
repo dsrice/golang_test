@@ -3,30 +3,29 @@ drop table if exists video_tags;
 drop table if exists tags;
 drop table if exists videos;
 drop table if exists sponsors;
-drop table if exists comments;
-drop table if exists posts;
 drop table if exists users;
 drop table if exists type_monsters;
+drop view if exists user_videos;
+drop view if exists type_monsters_v;
+drop materialized view if exists type_monsters_mv;
+
+drop type if exists workday;
+create type workday as enum('monday', 'tuesday', 'wednesday', 'thursday', 'friday');
+
+drop domain if exists uint3;
+create domain uint3 as numeric check(value >= 0 and value < power(2::numeric, 3::numeric));
 
 create table users (
-	id serial primary key not null
-);
-
-create table posts (
 	id serial primary key not null,
-	user_id int null,
-	content string null,
-
-	foreign key (user_id) references users (id)
+	email_validated  bool null default false,
+	primary_email    varchar(100) unique null
 );
 
-CREATE TABLE comments (
-	user_id int null,
-	post_id int null,
-	content string null,
+comment on column users.email_validated is 'Has the email address been tested?';
+comment on column users.primary_email is 'The user''s preferred email address.
 
-	primary key (user_id, post_id)
-);
+Use this to send emails to the user.';
+
 
 create table sponsors (
 	id serial primary key not null
@@ -34,7 +33,7 @@ create table sponsors (
 
 create table videos (
 	id serial primary key not null,
-	
+
 	user_id int not null,
 	sponsor_id int unique,
 
@@ -55,8 +54,14 @@ create table video_tags (
 	foreign key (tag_id) references tags (id)
 );
 
+drop type if exists my_int_array;
+create domain my_int_array as int[];
+
 create table type_monsters (
 	id serial primary key not null,
+
+	enum_use        workday not null,
+	enum_nullable   workday,
 
 	bool_zero   bool,
 	bool_one    bool null,
@@ -122,7 +127,6 @@ create table type_monsters (
 	float_seven numeric(2,1) not null default 1.1,
 	float_eight numeric(2,1) null default 0.0,
 	float_nine  numeric(2,1) null default 0.0,
-	float_ten   float,
 
 	bytea_zero  bytea,
 	bytea_one   bytea null,
@@ -134,19 +138,25 @@ create table type_monsters (
 	bytea_seven bytea not null default '',
 	bytea_eight bytea not null default '',
 
-	time_zero     timestamp,
-	time_one      date,
-	time_two      timestamp null default null,
-	time_three    timestamp null,
-	time_four     timestamp not null,
-	time_five     timestamp null default '1999-01-08 04:05:06.789',
-	time_six      timestamp null default '1999-01-08 04:05:06.789 -8:00',
-	time_seven    timestamp not null default '1999-01-08 04:05:06.789',
-	time_eight    timestamp not null default '1999-01-08 04:05:06.789 -8:00',
-	time_ten      date null,
-	time_eleven   date not null,
-	time_twelve   date null default '1999-01-08',
-	time_thirteen date not null default '1999-01-08',
+	time_zero      timestamp,
+	time_one       date,
+	time_two       timestamp null default null,
+	time_three     timestamp null,
+	time_four      timestamp not null,
+	time_five      timestamp null default '1999-01-08 04:05:06.789',
+	time_six       timestamp null default '1999-01-08 04:05:06.789 -8:00',
+	time_seven     timestamp null default 'January 8 04:05:06 1999 PST',
+	time_eight     timestamp not null default '1999-01-08 04:05:06.789',
+	time_nine      timestamp not null default '1999-01-08 04:05:06.789 -8:00',
+	time_ten       timestamp not null default 'January 8 04:05:06 1999 PST',
+	time_eleven    date null,
+	time_twelve    date not null,
+	time_thirteen  date null default '1999-01-08',
+	time_fourteen  date null default 'January 8, 1999',
+	time_fifteen   date null default '19990108',
+	time_sixteen   date not null default '1999-01-08',
+	time_seventeen date not null default 'January 8, 1999',
+	time_eighteen  date not null default '19990108',
 
 	uuid_zero  uuid,
 	uuid_one   uuid null,
@@ -157,8 +167,8 @@ create table type_monsters (
 
 	integer_default integer default '5'::integer,
 	varchar_default varchar(1000) default 5::varchar,
-	timestamp_notz  timestamp without time zone default (now()),
-	timestamp_tz    timestamp with time zone default (now()),
+	timestamp_notz  timestamp without time zone default (now() at time zone 'utc'),
+	timestamp_tz    timestamp with time zone default (now() at time zone 'utc'),
 	interval_nnull  interval not null default '21 days',
 	interval_null   interval null default '23 hours',
 
@@ -167,11 +177,55 @@ create table type_monsters (
 	jsonb_null  jsonb null,
 	jsonb_nnull jsonb not null,
 
+	box_null  box null,
+	box_nnull box not null,
+
+	cidr_null  cidr null,
+	cidr_nnull cidr not null,
+
+	circle_null  circle null,
+	circle_nnull circle not null,
+
 	double_prec_null  double precision null,
 	double_prec_nnull double precision not null,
 
 	inet_null  inet null,
 	inet_nnull inet not null,
+
+	line_null  line null,
+	line_nnull line not null,
+
+	lseg_null  lseg null,
+	lseg_nnull lseg not null,
+
+	macaddr_null  macaddr null,
+	macaddr_nnull macaddr not null,
+
+	money_null  money null,
+	money_nnull money not null,
+
+	path_null  path null,
+	path_nnull path not null,
+
+	pg_lsn_null  pg_lsn null,
+	pg_lsn_nnull pg_lsn not null,
+
+	point_null  point NULL,
+	point_nnull point NOT NULL,
+
+	polygon_null  polygon NULL,
+	polygon_nnull polygon NOT NULL,
+
+	tsquery_null   tsquery NULL,
+	tsquery_nnull  tsquery NOT NULL,
+	tsvector_null  tsvector NULL,
+	tsvector_nnull tsvector NOT NULL,
+
+	txid_null  txid_snapshot NULL,
+	txid_nnull txid_snapshot NOT NULL,
+
+	xml_null  xml NULL,
+	xml_nnull xml NOT NULL,
 
 	intarr_null      integer[] null,
 	intarr_nnull     integer[] not null,
@@ -182,5 +236,27 @@ create table type_monsters (
 	decimalarr_null  decimal[] null,
 	decimalarr_nnull decimal[] not null,
 	byteaarr_null    bytea[] null,
-	byteaarr_nnull   bytea[] not null
+	byteaarr_nnull   bytea[] not null,
+	jsonbarr_null    jsonb[] null,
+	jsonbarr_nnull   jsonb[] not null,
+	jsonarr_null     json[] null,
+	jsonarr_nnull    json[] not null,
+
+	customarr_null   my_int_array null,
+	customarr_nnull  my_int_array not null,
+
+    domainuint3_nnull uint3 not null,
+
+    base text null,
+
+    generated_nnull text NOT NULL GENERATED ALWAYS AS (UPPER(base)) STORED,
+    generated_null text NULL GENERATED ALWAYS AS (UPPER(base)) STORED
 );
+
+create view user_videos as 
+select u.id user_id, v.id video_id, v.sponsor_id sponsor_id
+from users u
+inner join videos v on v.user_id = u.id;
+
+create view type_monsters_v as select * from type_monsters; 
+create materialized view type_monsters_mv as select * from type_monsters_v;

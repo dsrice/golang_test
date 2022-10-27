@@ -1,7 +1,7 @@
 // These tests assume there is a user sqlboiler_driver_user and a database
 // by the name of sqlboiler_driver_test that it has full R/W rights to.
 // In order to create this you can use the following steps from a root
-// crdb account:
+// psql account:
 //
 //   create role sqlboiler_driver_user login nocreatedb nocreaterole nocreateuser password 'sqlboiler';
 //   create database sqlboiler_driver_test owner = sqlboiler_driver_user;
@@ -12,8 +12,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"io/ioutil"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/volatiletech/sqlboiler/v4/drivers"
 )
@@ -21,45 +23,82 @@ import (
 var (
 	flagOverwriteGolden = flag.Bool("overwrite-golden", false, "Overwrite the golden file with the current execution results")
 
-	envHostname = drivers.DefaultEnv("DRIVER_HOSTNAME", "localhost")
-	envPort     = drivers.DefaultEnv("DRIVER_PORT", "26257")
-	envUsername = drivers.DefaultEnv("DRIVER_USER", "root")
-	envPassword = drivers.DefaultEnv("DRIVER_PASS", "")
-	envDatabase = drivers.DefaultEnv("DRIVER_DB", "sqlboiler_driver_test")
+	envHostname = drivers.DefaultEnv("DRIVER_HOSTNAME", "vertica")
+	envPort     = drivers.DefaultEnv("DRIVER_PORT", "5433")
+	envUsername = drivers.DefaultEnv("DRIVER_USER", "dbadmin")
+	envPassword = drivers.DefaultEnv("DRIVER_PASS", "gotest")
+	envDatabase = drivers.DefaultEnv("DRIVER_DB", "gotest")
 )
 
 func TestAssemble(t *testing.T) {
-
-	config := drivers.Config{
-		"sslmode": "disable",
-		"schema":  "public",
-	}
-
-	c := &VerticaDBDriver{}
-	info, err := c.Assemble(config)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := json.MarshalIndent(info, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if *flagOverwriteGolden {
-		if err = ioutil.WriteFile("vertica.golden.json", got, 0664); err != nil {
+	/*
+		b, err := ioutil.ReadFile("testdatabase.sql")
+		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log("wrote:", string(got))
-		return
-	}
 
-	want, err := ioutil.ReadFile("vertica.golden.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+		out := &bytes.Buffer{}
+		createDB := exec.Command("psql", "-h", envHostname, "-U", envUsername, envDatabase)
+		createDB.Env = append([]string{fmt.Sprintf("PGPASSWORD=%s", envPassword)}, os.Environ()...)
+		createDB.Stdout = out
+		createDB.Stderr = out
+		createDB.Stdin = bytes.NewReader(b)
 
-	if bytes.Compare(want, got) != 0 {
-		t.Errorf("want:\n%s\ngot:\n%s\n", want, got)
+		if err := createDB.Run(); err != nil {
+			t.Logf("psql output:\n%s\n", out.Bytes())
+			t.Fatal(err)
+		}
+		t.Logf("psql output:\n%s\n", out.Bytes())
+	*/
+	tests := []struct {
+		name       string
+		config     drivers.Config
+		goldenJson string
+	}{
+		{
+			name: "default",
+			config: drivers.Config{
+				"user":    envUsername,
+				"pass":    envPassword,
+				"dbname":  envDatabase,
+				"host":    envHostname,
+				"port":    envPort,
+				"sslmode": "disable",
+				"schema":  "golearn",
+			},
+			goldenJson: "psql.golden.json",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := VerticaDriver{}
+			info, err := p.Assemble(tt.config)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			got, err := json.MarshalIndent(info, "", "\t")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if *flagOverwriteGolden {
+				if err = os.WriteFile(tt.goldenJson, got, 0664); err != nil {
+					t.Fatal(err)
+				}
+				t.Log("wrote:", string(got))
+				return
+			}
+
+			want, err := os.ReadFile(tt.goldenJson)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if bytes.Compare(want, got) != 0 {
+				t.Errorf("want:\n%s\ngot:\n%s\n", want, got)
+			}
+			require.JSONEq(t, string(want), string(got))
+		})
 	}
 }
